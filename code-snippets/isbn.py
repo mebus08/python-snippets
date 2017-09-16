@@ -5,29 +5,38 @@
 
     Tested under Python 3.6
 
-    Copyright(2017)
-
-    TODO
-    # add ean check
-# todo
-# add ean check
-# https://www.gs1.org/how-calculate-check-digit-manually
-    VERSION
-    0.1  ->  Project Start
-    
-
-
 '''
 
 
 def get_clear_isbn(isbn):
     '''
-        Return a clear ISBN (as Str !!!)
-        IN:  0-19 -852663 6
-        OUT: 0198526636
+        Return a clear ISBN (as Str !!!) or 0 if isbn
+        contains letters or what else.
+
+        Exemple:  0-19 -852663 X
+        Return :  019852663x
+        Exemple:  978-123456 1234
+        Return :  9781234561234
+        Exemple:  1234X54321
+        Return :  0
     '''
 
-    return isbn.lower().replace('-', '').replace(' ', '')
+    isbn = str(isbn)
+    isbn = isbn.lower().replace('-', '').replace(' ', '')
+
+    if len(isbn) == 10:
+        if isbn[0:9].isdigit():
+            return isbn
+        else:
+            return 0
+
+    if len(isbn) == 13:
+        if isbn.isdigit():
+            return isbn
+        else:
+            return 0
+    else:
+        return 0
 
 
 def check_isbn_10(isbn):
@@ -37,22 +46,25 @@ def check_isbn_10(isbn):
         https://isbn-information.com/the-10-digit-isbn.html
         Return True or False
     '''
-
-    multi = 1
-    checksumme = 0
     c_isbn = get_clear_isbn(isbn)
-    for number in c_isbn[::-1]:
-        if 'x' in number:
-            number = number.replace('x', '10')
-        summe = int(number) * multi
-        checksumme = checksumme + summe
-        multi += 1
-    valid = checksumme % 11
+    if not c_isbn == 0:
+        multi = 1
+        checksumme = 0
 
-    if not valid == 0:
-        return False
+        for number in c_isbn[::-1]:
+            if 'x' in number:
+                number = number.replace('x', '10')
+            summe = int(number) * multi
+            checksumme = checksumme + summe
+            multi += 1
+        valid = checksumme % 11
+
+        if not valid == 0:
+            return False
+        else:
+            return True
     else:
-        return True
+        return False
 
 
 def check_isbn_13(isbn):
@@ -62,24 +74,29 @@ def check_isbn_13(isbn):
         https://isbn-information.com/the-13-digit-isbn.html
         Return True or False
     '''
-    summe1 = 0
-    summe2 = 0
     c_isbn = get_clear_isbn(isbn)
-    for number in c_isbn[0::2]:
-        summe1 = summe1 + int(number)
-    summe1 = summe1 * 1
+    if not c_isbn == 0:
 
-    for number in c_isbn[1::2]:
-        summe2 = summe2 + int(number)
-    summe2 = summe2 * 3
+        summe1 = 0
+        summe2 = 0
 
-    checksumme = summe1 + summe2
-    valid = checksumme % 10
+        for number in c_isbn[0::2]:
+            summe1 = summe1 + int(number)
+        summe1 = summe1 * 1
 
-    if not valid == 0:
-        return False
+        for number in c_isbn[1::2]:
+            summe2 = summe2 + int(number)
+        summe2 = summe2 * 3
+
+        checksumme = summe1 + summe2
+        valid = checksumme % 10
+
+        if not valid == 0:
+            return False
+        else:
+            return True
     else:
-        return True
+        return False
 
 
 def convert_isbn_10_to_13(isbn):
@@ -108,10 +125,10 @@ def convert_isbn_10_to_13(isbn):
         remainder = (summe1 + summe2) % 10
 
         if remainder == 0:
-            isbn13 = isbn13+'0'
+            isbn13 = isbn13 + '0'
         else:
             check_digit = 10 - remainder
-            isbn13 = isbn13+str(check_digit)
+            isbn13 = isbn13 + str(check_digit)
         if check_isbn_13:
             return int(isbn13)
         else:
